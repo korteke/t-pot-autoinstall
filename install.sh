@@ -248,11 +248,17 @@ yum -y update
 
 # Install packages needed
 
-apt-get install apache2-utils apparmor apt-transport-https aufs-tools bash-completion build-essential ca-certificates cgroupfs-mount curl dialog dnsutils docker.io dstat ethtool genisoimage git glances html2text htop iptables iw jq libcrack2 libltdl7 lm-sensors man nginx-extras nodejs npm ntp openssh-server openssl prips syslinux psmisc pv python-pip unzip vim -y 
+#apt-get install apache2-utils apparmor apt-transport-https aufs-tools bash-completion build-essential ca-certificates cgroupfs-mount curl dialog dnsutils docker.io dstat ethtool genisoimage git glances html2text htop iptables iw jq libcrack2 libltdl7 lm-sensors man nginx-extras nodejs npm ntp openssh-server openssl prips syslinux psmisc pv python-pip unzip vim -y 
+
+# Enable EPEL reposiroty
+fuECHO "### Enabling EPEL repository"
+yum -y install epel-release
+
+fuECHO "### Install packages"
+yum -y install httpd-tools ca-certificates curl dialog docker docker-compose git htop jq lm-sensors nginx nodejs npm ntp openssh-server openssl pv python-pip2 unzip vim
 
 # Let's clean up apt
-apt-get autoclean -y
-apt-get autoremove -y
+yum clean all
 
 # Let's remove NGINX default website
 fuECHO "### Removing NGINX default website."
@@ -290,15 +296,6 @@ fi
 htpasswd -b -c /etc/nginx/nginxpasswd "$myUSER" "$myPASS1" 
 fuECHO
 
-# Let's modify the sources list
-sed -i '/cdrom/d' /etc/apt/sources.list
-
-# Let's make sure SSH roaming is turned off (CVE-2016-0777, CVE-2016-0778)
-fuECHO "### Let's make sure SSH roaming is turned off."
-tee -a /etc/ssh/ssh_config  <<EOF
-UseRoaming no
-EOF
-
 # Let's generate a SSL certificate
 fuECHO "### Generating a self-signed-certificate for NGINX."
 fuECHO "### If you are unsure you can use the default values."
@@ -309,8 +306,8 @@ openssl req -nodes -x509 -sha512 -newkey rsa:8192 -keyout "/etc/nginx/ssl/nginx.
 pip install --upgrade pip && hash -r pip
 # upgrading setuptools
 pip install --upgrade setuptools
-fuECHO "### Installing docker-compose."
-pip install docker-compose==1.16.1 
+#fuECHO "### Installing docker-compose."
+#pip install docker-compose==1.16.1 
 fuECHO "### Installing elasticsearch curator."
 pip install elasticsearch-curator==5.2.0
 fuECHO "### Installing wetty."
@@ -419,8 +416,6 @@ tee -a /etc/crontab <<EOF
 */1 * * * *     root    mv --backup=numbered /data/dionaea/roots/ftp/* /data/dionaea/binaries/
 # Daily reboot
 27 3 * * *      root    reboot
-# Check for updated packages every sunday, upgrade and reboot
-27 16 * * 0     root    apt-get autoclean -y && apt-get autoremove -y && apt-get update -y && apt-get upgrade -y && sleep 10 && reboot
 EOF
 
 # Let's create some files and folders
@@ -468,31 +463,13 @@ chown tpot:tpot -R /data
 chmod 600 /home/$myuser/.ssh/authorized_keys 
 chown $myuser:$myuser /home/$myuser/.ssh /home/$myuser/.ssh/authorized_keys 
 
-# Let's replace "quiet splash" options, set a console font for more screen canvas and update grub
-sed -i 's#GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"#GRUB_CMDLINE_LINUX_DEFAULT="consoleblank=0"#' /etc/default/grub
-sed -i 's#GRUB_CMDLINE_LINUX=""#GRUB_CMDLINE_LINUX="cgroup_enable=memory swapaccount=1"#' /etc/default/grub
-update-grub
-cp /usr/share/consolefonts/Uni2-Terminus12x6.psf.gz /etc/console-setup/
-gunzip /etc/console-setup/Uni2-Terminus12x6.psf.gz
-sed -i 's#FONTFACE=".*#FONTFACE="Terminus"#' /etc/default/console-setup
-sed -i 's#FONTSIZE=".*#FONTSIZE="12x6"#' /etc/default/console-setup
-update-initramfs -u 
-
-# Let's enable a color prompt and add /opt/tpot/bin to path
-myROOTPROMPT='PS1="\[\033[38;5;8m\][\[$(tput sgr0)\]\[\033[38;5;1m\]\u\[$(tput sgr0)\]\[\033[38;5;6m\]@\[$(tput sgr0)\]\[\033[38;5;4m\]\h\[$(tput sgr0)\]\[\033[38;5;6m\]:\[$(tput sgr0)\]\[\033[38;5;5m\]\w\[$(tput sgr0)\]\[\033[38;5;8m\]]\[$(tput sgr0)\]\[\033[38;5;1m\]\\$\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]"'
-myUSERPROMPT='PS1="\[\033[38;5;8m\][\[$(tput sgr0)\]\[\033[38;5;2m\]\u\[$(tput sgr0)\]\[\033[38;5;6m\]@\[$(tput sgr0)\]\[\033[38;5;4m\]\h\[$(tput sgr0)\]\[\033[38;5;6m\]:\[$(tput sgr0)\]\[\033[38;5;5m\]\w\[$(tput sgr0)\]\[\033[38;5;8m\]]\[$(tput sgr0)\]\[\033[38;5;2m\]\\$\[$(tput sgr0)\]\[\033[38;5;15m\] \[$(tput sgr0)\]"'
 tee -a /root/.bashrc  <<EOF
-$myROOTPROMPT
 PATH="$PATH:/opt/tpot/bin"
 EOF
 tee -a /home/$myuser/.bashrc <<EOF
 $myUSERPROMPT
 PATH="$PATH:/opt/tpot/bin"
 EOF
-
-# Let's create ews.ip before reboot and prevent race condition for first start
-/opt/tpot/bin/updateip.sh
-
 
 # Final steps
 fuECHO "### Thanks for your patience. Now rebooting. Remember to login on SSH port 64295 next time or visit the dashboard on port 64297!"
