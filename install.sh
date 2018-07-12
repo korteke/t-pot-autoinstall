@@ -250,12 +250,24 @@ yum -y update
 
 #apt-get install apache2-utils apparmor apt-transport-https aufs-tools bash-completion build-essential ca-certificates cgroupfs-mount curl dialog dnsutils docker.io dstat ethtool genisoimage git glances html2text htop iptables iw jq libcrack2 libltdl7 lm-sensors man nginx-extras nodejs npm ntp openssh-server openssl prips syslinux psmisc pv python-pip unzip vim -y 
 
+# Enable docker repository
+tee -a /etc/yum.repos.d/docker.repo <<EOF
+
+[dockerrepo]
+name=Docker Repository
+baseurl=https://yum.dockerproject.org/repo/main/centos/7
+enabled=1
+gpgcheck=1
+gpgkey=https://yum.dockerproject.org/gpg
+
+EOF
+
 # Enable EPEL reposiroty
 fuECHO "### Enabling EPEL repository"
 yum -y install epel-release
 
 fuECHO "### Install packages"
-yum -y install httpd-tools ca-certificates curl dialog docker docker-compose git htop jq lm-sensors nginx nodejs npm ntp openssh-server openssl pv python-pip2 unzip vim
+yum -y install httpd-tools ca-certificates curl dialog docker-engine docker-compose git htop jq lm-sensors nginx nodejs npm ntp openssh-server openssl pv python-pip2 unzip vim
 
 # Let's clean up apt
 yum clean all
@@ -382,14 +394,6 @@ for name in $(cat $myTPOTCOMPOSE | grep -v '#' | grep image | cut -d'"' -f2)
     let j+=1
   done
   
-# Let's add the daily update check with a weekly clean interval
-fuECHO "### Modifying update checks."
-tee /etc/apt/apt.conf.d/10periodic <<EOF
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Download-Upgradeable-Packages "0";
-APT::Periodic::AutocleanInterval "7";
-EOF
-
 # Let's make sure to reboot the system after a kernel panic
 fuECHO "### Reboot after kernel panic."
 tee -a /etc/sysctl.conf <<EOF
