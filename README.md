@@ -1,5 +1,5 @@
-# Autoinstall T-Pot on Ubuntu 16.04.x 
-This script will install [T-Pot 17.10](http://dtag-dev-sec.github.io/mediator/feature/2017/11/07/t-pot-17.10.html) on a fresh Ubuntu 16.04.x LTS (64bit). 
+# Autoinstall T-Pot on CentOS / RHEL 7
+This script will install [T-Pot 17.10](http://dtag-dev-sec.github.io/mediator/feature/2017/11/07/t-pot-17.10.html) on a fresh CentOS / RHEL 7 (64bit). 
 
 It is intended to be used on hosted servers, where an Ubuntu base image is given and there is no ability to install custom ISO images. 
 Successfully tested on vanilla Ubuntu 16.04.3 in VMware.
