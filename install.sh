@@ -46,7 +46,7 @@ Make sure the key-based SSH login for your normal user is working!
 
 # ADD ARGS for automated setup
 if [ "$#" -ne 3 -a  "$#" -gt 0 ]; then    
-	echo "## Please add the following three arguments for a one shot install:"
+    echo "## Please add the following three arguments for a one shot install:"
     echo "         Username, which edition to install (number), a webpassword"
     echo "## invoke: $0 myusername <1|2|3|4> myWebPassw0rd"
     echo ""
@@ -164,11 +164,6 @@ if [ -f install.log ];
         fuECHO "### Running more than once may complicate things. Erase install.log if you are really sure."
         exit 1
 fi
-
-# set locale
-locale-gen "en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-
 
 # Let's log for the beauty of it
 set -e
@@ -348,11 +343,6 @@ hostnamectl set-hostname $myHOST
 sed -i 's#127.0.1.1.*#127.0.1.1\t'"$myHOST"'#g' /etc/hosts 
 
 
-# Let's patch sshd_config
-fuECHO "### Patching sshd_config to listen on port 64295 and deny password authentication."
-sed -i 's#Port 22#Port 64295#' /etc/ssh/sshd_config
-sed -i 's#\#PasswordAuthentication yes#PasswordAuthentication no#' /etc/ssh/sshd_config
-
 # Let's allow ssh password authentication from RFC1918 networks
 fuECHO "### Allow SSH password authentication from RFC1918 networks"
 tee -a /etc/ssh/sshd_config <<EOF
@@ -440,6 +430,11 @@ mkdir -p /data/conpot/log \
          /data/vnclowpot/log
 touch /data/spiderfoot/spiderfoot.db 
 
+# Let's create directories for local modification
+mkdir -p /opt/tpot/localmodification/etc/suricata \
+         /opt/tpot/localmodification/etc/cowrie \
+         /opt/tpot/localmodification/etc/dionaea
+
 # Let's copy some files
 tar xvfz /opt/tpot/etc/objects/elkbase.tgz -C / 
 cp    /opt/tpot/host/etc/systemd/* /etc/systemd/system/ 
@@ -470,8 +465,8 @@ chown $myuser:$myuser /home/$myuser/.ssh /home/$myuser/.ssh/authorized_keys
 tee -a /root/.bashrc  <<EOF
 PATH="$PATH:/opt/tpot/bin"
 EOF
+
 tee -a /home/$myuser/.bashrc <<EOF
-$myUSERPROMPT
 PATH="$PATH:/opt/tpot/bin"
 EOF
 
